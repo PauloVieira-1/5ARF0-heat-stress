@@ -118,9 +118,20 @@ input[type=range]{width:100%;accent-color:var(--brand);margin:0}
 @media (max-width:640px){.panel{padding:22px 18px;gap:18px}}
 .ph{display:flex;flex-wrap:wrap;align-items:baseline;justify-content:space-between;gap:8px 16px}
 .ph p{font-size:13px;color:var(--muted)}
-.panel > .ph:not(:first-child){margin-top:14px}
+.panel > .ph:not(:first-child),.subbody > .ph:not(:first-child){margin-top:14px}
 .today{display:grid;grid-template-columns:minmax(0,1.25fr) minmax(0,1fr);gap:36px;align-items:start}
 .col{display:flex;flex-direction:column;gap:36px;min-width:0}
+.work{display:grid;grid-template-columns:minmax(280px,340px) minmax(0,1fr);gap:32px;align-items:start}
+.work-list{position:sticky;top:calc(env(safe-area-inset-top,0px) + 16px);min-width:0}
+.work-list .panel{padding:24px 22px;gap:16px}
+.work-list .herd{max-height:calc(100vh - 210px);overflow-y:auto;margin-inline:-8px;padding-inline:8px}
+.cowcard{gap:20px}
+.subtabs{display:flex;gap:4px;background:var(--surface-2);border:1px solid var(--line);border-radius:12px;padding:4px;overflow-x:auto;scrollbar-width:none}
+.subtabs button{flex:1 1 0;border:0;background:none;border-radius:9px;padding:10px 14px;font-weight:700;font-size:14px;color:var(--muted);white-space:nowrap;display:inline-flex;align-items:center;justify-content:center;gap:8px}
+.subtabs button[aria-selected="true"]{background:var(--surface);color:var(--ink);box-shadow:0 1px 2px rgba(0,0,0,.12)}
+.subbody{display:flex;flex-direction:column;gap:22px;min-width:0}
+.subbody > .ph:first-child{margin-top:0}
+@media (max-width:980px){.work{grid-template-columns:minmax(0,1fr);gap:28px}.work-list{position:static}.work-list .herd{max-height:380px}}
 @media (max-width:980px){.today{grid-template-columns:minmax(0,1fr);gap:28px}.col{gap:28px}}
 
 /* charts */
@@ -140,20 +151,24 @@ input[type=range]{width:100%;accent-color:var(--brand);margin:0}
 .fchip{border:1px solid var(--line);background:var(--surface);border-radius:999px;padding:7px 15px;font-size:13px;font-weight:700;color:var(--muted)}
 .fchip[aria-pressed="true"]{background:var(--ink);border-color:var(--ink);color:var(--surface)}
 .herd{display:flex;flex-direction:column}
-.hrow{display:grid;grid-template-columns:118px minmax(0,1fr) 46px 92px 120px;align-items:center;gap:14px;border:0;border-top:1px solid var(--line);background:none;padding:14px 10px;text-align:left;width:100%;border-radius:10px}
+.hrow{display:grid;grid-template-columns:minmax(0,1fr) 72px 40px;align-items:center;gap:14px;border:0;border-top:1px solid var(--line);background:none;padding:14px 10px;text-align:left;width:100%;border-radius:10px}
 .hrow:first-child{border-top:0}
 .hrow:hover+.hrow,.hrow[aria-pressed="true"]+.hrow{border-top-color:transparent}
 .hrow:hover{background:var(--surface-2)}
 .hrow[aria-pressed="true"]{background:var(--brand-soft)}
 .hrow .who{display:flex;flex-direction:column;line-height:1.2;min-width:0}
 .hrow .who b{font-family:var(--mono);font-weight:500;font-size:14px}
+.hrow .who b em{font-family:var(--sans);font-style:normal;font-weight:600;margin-left:4px}
+.hrow .who span{display:flex;align-items:center;gap:6px}
+.dot{display:inline-block;width:8px;height:8px;border-radius:50%;flex:none;background:var(--muted)}
+.dot.high{background:var(--high)}.dot.mod{background:var(--mod)}.dot.ok{background:var(--ok)}
 .hrow .who span{font-size:12px;color:var(--muted);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
 .hrow .where{font-size:12.5px;color:var(--muted);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
 .bar{position:relative;height:12px;background:var(--track);border-radius:3px}
 .bar .band{position:absolute;top:0;bottom:0;border-radius:3px;opacity:.28}
 .bar .fill{position:absolute;inset:0 auto 0 0;border-radius:3px}
 .bar .th{position:absolute;top:-4px;bottom:-4px;border-left:2px dashed var(--high);opacity:.75}
-@media (max-width:620px){.hrow{grid-template-columns:96px minmax(0,1fr) 44px 84px}.hrow .where{display:none}}
+
 
 /* pills */
 .pill{display:inline-flex;align-items:center;gap:6px;font-size:12px;font-weight:700;padding:3px 10px;border-radius:999px;white-space:nowrap;justify-self:start}
@@ -470,7 +485,7 @@ const BREED_EVAL=[
 ];
 
 const newForm=()=>({obs:new Set(),call:null,acts:new Set(),note:'',nearby:true,err:''});
-const S={step:START_STEP,thr:60,tab:'today',role:'farmer',sel:'001',filter:'all',independent:false,
+const S={sub:'why',step:START_STEP,thr:60,tab:'today',role:'farmer',sel:'001',filter:'all',independent:false,
   checks:{},ivs:{},missed:[],form:newForm(),missOpen:false,missForm:newForm(),
   share:{vet:false,dev:false,coop:false},timer:null,toastTimer:null};
 
@@ -712,23 +727,22 @@ function herdHtml(sim){const rows=COWS.map(c=>({c,r:sim.tl[c.id][S.step]})).map(
     </div>
     <div class="herd">${shown.length?shown.map(({c,r,pct,lv})=>`
       <button type="button" class="hrow" data-cow="${c.id}" aria-pressed="${c.id===S.sel}">
-        <span class="who"><b>${c.id}</b><span>${esc(c.name)}</span></span>
+        <span class="who"><b>${c.id} <em>${esc(c.name)}</em></b><span><i class="dot ${lv}"></i>${LV[lv]} · ${where(r)}${r.gap?' · data gap':''}</span></span>
         ${riskBar(pct,r.u,lv)}
         <span class="num" style="text-align:right">${Math.round(pct)}%</span>
-        <span class="pill ${lv}">${LV[lv]}</span>
-        <span class="where">${where(r)}${r.gap?' · data gap':''}</span>
       </button>`).join(''):`<p class="muted" style="padding:12px 6px">None</p>`}</div>
   </section>`;}
 
-function whyHtml(r,c){const items=Object.entries(r.contrib).filter(([,v])=>v>0.05).sort((a,b)=>b[1]-a[1]);
+function whyHtml(r,c,lv){const items=Object.entries(r.contrib).filter(([,v])=>v>0.05).sort((a,b)=>b[1]-a[1]);
   const max=Math.max(1.5,...items.map(i=>i[1]));
   const reading={breathing:`${r.resp}/min, her normal ${c.baseResp}`,bodyTemp:`${r.temp} °C, normal ${c.baseTemp}`,rumination:`down ${Math.max(0,r.rumDrop)}% vs her normal`,
     standing:`lying down ${Math.max(0,r.lieDrop)}% less`,thi:`THI ${r.thi.toFixed(1)}, limit 68`,sun:`${fmtDur(r.sun)} in direct sun`,milk:`on track for −${r.milk}% today`};
   if(!items.length)return `<p class="note">No signals raised.</p>`;
-  return `<div class="why">${items.slice(0,6).map(([k,v])=>`<div class="row"><div class="lab">${LABEL[k]} <span>· ${reading[k]}</span></div><div class="mini" aria-hidden="true"><i style="width:${Math.min(100,v/max*100)}%"></i></div></div>`).join('')}</div>`;}
+  return `<div class="why">${items.slice(0,6).map(([k,v])=>`<div class="row"><div class="lab">${LABEL[k]} <span>· ${reading[k]}</span></div><div class="mini" aria-hidden="true"><i style="width:${Math.min(100,v/max*100)}%;background:var(--${lv})"></i></div></div>`).join('')}</div>`;}
 
 function rulePath(r,pct){const n=[[`Breathing 60+/min`,r.resp>=60],[`THI 68+`,r.thi>=68],[`In sun 30+ min`,r.inSun&&r.sun>=30]];
-  return `<div class="rulepath"><span class="note">Decision tree path (illustrative)${cite('p3464','zim','report')}</span>${n.map(([t,y])=>`<span class="node ${y?'yes':'no'}">${t}: ${y?'yes':'no'}</span>`).join('<span class="arr">→</span>')}<span class="arr">→</span><span class="node leaf ${level(pct)}">${LV[level(pct)]}</span></div>`;}
+  const path=[];for(const [t,y] of n){path.push(`<span class="node ${y?'yes':'no'}">${t}: ${y?'yes':'no'}</span>`);if(!y)break;}
+  return `<div class="rulepath"><span class="note">Decision tree path (illustrative)${cite('p3464','zim','report')}</span>${path.join('<span class="arr">→</span>')}<span class="arr">→</span><span class="node leaf ${level(pct)}">${LV[level(pct)]}</span></div>`;}
 function signalsHtml(r,c){const f=(cond)=>cond?'flag':'';
   const rum=r.gap==='rumination'?`<dd class="gap">no data <small>sensor gap</small></dd>`:`<dd class="${f(r.rumDrop>=20)}">${r.rum} min/h <small>(${c.baseRum})</small></dd>`;
   return `<div class="sigs">
@@ -788,39 +802,41 @@ function detailHtml(sim){const c=COW[S.sel];const r=sim.tl[c.id][S.step];const p
   else if(la)statusLine=`<span class="pill ${st.cls}">${st.label}</span><span>Alert ${fmtClock(clk(la.step))}, checked ${fmtClock(clk(st.ck.step))}</span>`;
   else statusLine=`<span class="pill plain">No alert today</span>`;
   let check='';
-  if(oa)check=`<div class="ph"><h3>Your check</h3></div>${checkFormHtml(oa,c,sim)}`;
-  else if(la){const ck=st.ck;check=`<div class="ph"><h3>Your check</h3></div><div class="check done"><div><b>${CALL[ck.call]}</b> · ${fmtClock(clk(ck.step))}</div>
+  if(oa)check=checkFormHtml(oa,c,sim);
+  else if(la){const ck=st.ck;check=`<div class="check done"><div><b>${CALL[ck.call]}</b> · ${fmtClock(clk(ck.step))}</div>
     <div class="note">Score ${SCORE[ck.score]}. Saw: ${ck.obs.map(k=>OBS[k]).join(', ')}${ck.acts.length?`<br>Did: ${ck.acts.map(k=>ACTS[k]).join(', ')}`:''}${ck.note?`<br>Note: ${esc(ck.note)}`:''}</div></div>${missedHtml(c)}`;}
-  else check=`<div class="ph"><h3>Your check</h3></div>${missedHtml(c)}`;
-  return `<section class="panel" id="detail" aria-live="polite" aria-labelledby="detT">
+  else check=missedHtml(c);
+  const subs=[['why','Why'],['where','Where'],['check','Check'],['readings','Readings']];
+  const sub=S.sub||'why';
+  let body='';
+  if(sub==='why')body=`${spark(c.id,sim)}
+    ${r.gap?`<div class="warnbox">${I.warn}<div><b>Rumination sensor has no data since ${fmtClock(c.gap.from)}.</b> Left out of the likelihood.</div></div>`:''}
+    <div class="ph"><h3>Reasons${cite('rudin')}</h3></div>
+    ${hideWhy?`<div class="locked">${I.lock}<div>Hidden until you save your check.</div></div>`:whyHtml(r,c,lv)+rulePath(r,pct)}
+    ${advKeys.length&&lv!=='ok'?`<div class="ph"><h3>Suggested actions</h3></div><ul class="advice">${advKeys.map(k=>`<li>${I.arrow}<span><b>${ADVICE[k][0]}.</b> ${ADVICE[k][1]}${cite(...ADVICE[k][2])}</span></li>`).join('')}</ul>`:''}
+    ${oa?`<div><button class="btn primary" type="button" data-sub="where">Next: where she is</button></div>`:''}`;
+  else if(sub==='where')body=`<div class="where-box"><svg viewBox="0 0 44 44" aria-hidden="true"><circle cx="22" cy="22" r="20" fill="var(--surface)" stroke="var(--line)" stroke-width="2"/><text x="22" y="10" text-anchor="middle" style="font-size:8px;font-weight:700;fill:var(--muted);font-family:var(--sans)">N</text><g transform="rotate(${b.deg} 22 22)"><path d="M22 8 L27 24 L22 21 L17 24Z" fill="var(--accent)"/></g></svg>
+      <div><b>${where}</b><span>${whereSub}</span></div></div>
+    ${mapSvg(sim)}
+    <div class="legend"><span><i style="background:var(--high)"></i>High</span><span><i style="background:var(--mod)"></i>Moderate</span><span><i style="background:var(--ok)"></i>Low</span><span><i class="sq" style="background:var(--tree)"></i>Trees, shade</span><span><i class="sq" style="background:var(--water)"></i>Ditch, trough</span></div>
+    ${oa?`<div><button class="btn primary" type="button" data-sub="check">Next: check her</button></div>`:''}`;
+  else if(sub==='check')body=check;
+  else body=`${signalsHtml(r,c)}
+    <div class="collar"><span>Collar <b>C-${(4400+c.n*7)}</b></span><span>Battery <b style="${c.battery<15?'color:var(--high)':''}">${c.battery}%</b></span>
+      <span>Fit checked <b>${c.fitDate}</b></span><span>Comfort <b style="${c.fit==='due'?'color:var(--mod)':''}">${c.fit==='due'?'Fit check due':'OK'}</b></span></div>`;
+  return `<section class="panel cowcard" id="detail" aria-live="polite" aria-labelledby="detT">
     <div class="d-head"><div><h2 id="detT">Cow ${c.id} · ${esc(c.name)}</h2><p>${c.breed} · ${c.age} years · ${c.tag}</p></div><span class="pill ${lv}">${LV[lv]}</span></div>
     <div class="likely"><span class="big">${Math.round(pct)}%</span>
       <div class="rng">${riskBar(pct,r.u,lv)}<small>Range ${lo} to ${hi}%${cite('zhang')}</small></div></div>
     <div class="statusline">${statusLine}</div>
-    ${spark(c.id,sim)}
-    <div class="where-box"><svg viewBox="0 0 44 44" aria-hidden="true"><circle cx="22" cy="22" r="20" fill="var(--surface)" stroke="var(--line)" stroke-width="2"/><text x="22" y="10" text-anchor="middle" style="font-size:8px;font-weight:700;fill:var(--muted);font-family:var(--sans)">N</text><g transform="rotate(${b.deg} 22 22)"><path d="M22 8 L27 24 L22 21 L17 24Z" fill="var(--accent)"/></g></svg>
-      <div><b>${where}</b><span>${whereSub}</span></div></div>
-    ${r.gap?`<div class="warnbox">${I.warn}<div><b>Rumination sensor has no data since ${fmtClock(c.gap.from)}.</b> Left out of the likelihood.</div></div>`:''}
-    <div class="ph"><h3>Reasons${cite('rudin')}</h3></div>
-    ${hideWhy?`<div class="locked">${I.lock}<div>Hidden until you save your check.</div></div>`:whyHtml(r,c)+rulePath(r,pct)}
-    ${advKeys.length&&lv!=='ok'?`<div class="ph"><h3>Suggested actions</h3></div><ul class="advice">${advKeys.map(k=>`<li>${I.arrow}<span><b>${ADVICE[k][0]}.</b> ${ADVICE[k][1]}${cite(...ADVICE[k][2])}</span></li>`).join('')}</ul>`:''}
-    ${check}
-    <div class="ph"><h3>Readings${cite('hoffmann')}</h3></div>
-    ${signalsHtml(r,c)}
-    <div class="collar"><span>Collar <b>C-${(4400+c.n*7)}</b></span><span>Battery <b style="${c.battery<15?'color:var(--high)':''}">${c.battery}%</b></span>
-      <span>Fit checked <b>${c.fitDate}</b></span><span>Comfort <b style="${c.fit==='due'?'color:var(--mod)':''}">${c.fit==='due'?'Fit check due':'OK'}</b></span></div>
+    <div class="subtabs" role="tablist" aria-label="Cow details">${subs.map(([k,t])=>`<button type="button" role="tab" data-sub="${k}" aria-selected="${sub===k}">${t}${k==='check'&&oa?'<i class="dot high"></i>':''}</button>`).join('')}</div>
+    <div class="subbody">${body}</div>
   </section>`;}
 
 function todayHtml(sim){
   return `${bannerHtml(sim)}${tilesHtml(sim)}
-  <section class="panel" aria-labelledby="dayT"><div class="ph"><h2 id="dayT">THI today${cite('nrc','zim','oliveira')}</h2></div>${thiChart(sim)}</section>
-  <div class="today"><div class="col">
-    <section class="panel" aria-labelledby="mapT"><div class="ph"><h2 id="mapT">Map</h2></div>
-      ${mapSvg(sim)}
-      <div class="legend"><span><i style="background:var(--high)"></i>High</span><span><i style="background:var(--mod)"></i>Moderate</span><span><i style="background:var(--ok)"></i>Low</span><span><i class="sq" style="background:var(--tree)"></i>Trees, shade</span><span><i class="sq" style="background:var(--water)"></i>Ditch, trough</span></div>
-    </section>
-    ${herdHtml(sim)}
-  </div>${detailHtml(sim)}</div>`;}
+  <div class="work"><aside class="work-list">${herdHtml(sim)}</aside>${detailHtml(sim)}</div>
+  <section class="panel" aria-labelledby="dayT"><div class="ph"><h2 id="dayT">THI today${cite('nrc','zim','oliveira')}</h2></div>${thiChart(sim)}</section>`;}
 
 function alertsHtml(sim){const list=[...sim.alerts].sort((a,b)=>b.step-a.step);
   const by=k=>list.filter(a=>status(a).k===k).length;
@@ -839,7 +855,7 @@ function alertsHtml(sim){const list=[...sim.alerts].sort((a,b)=>b.step-a.step);
    ${list.map(a=>{const st=status(a);return `<tr><td class="num" style="text-align:left">${fmtClock(clk(a.step))}</td><td><b class="num">${a.cow}</b> ${esc(COW[a.cow].name)}</td><td class="num">${Math.round(a.peak)}%</td>
      <td>${topReasons(a.start,3).map(k=>LABEL[k]).join(', ')||'Combined small changes'}</td>
      <td><span class="pill ${st.cls}">${st.label}</span>${st.k==='open'?`<div class="note">for ${fmtDur(st.age)}${a.open?'':', signs have eased'}</div>`:''}</td>
-     <td><button class="linkbtn" type="button" data-goto="${a.cow}">${st.k==='open'?'Check':'View'}</button></td></tr>`;}).join('')}</tbody></table></div>`
+     <td><button class="linkbtn" type="button" data-goto="${a.cow}" data-goto-sub="${st.k==='open'?'check':'why'}">${st.k==='open'?'Check':'View'}</button></td></tr>`;}).join('')}</tbody></table></div>`
    :`<div class="empty">${I.check}<b>No alerts yet today</b></div>`}
   <div class="infobox">${I.lock}<div>Response times are not shared.${cite('report','winner')}</div></div></section>
   <section class="panel"><div class="ph"><h2>Feedback</h2><p>${S.share.dev?'Shared anonymised with developers':'Not shared'}</p></div>
@@ -992,12 +1008,13 @@ function stop(){clearInterval(S.timer);S.timer=null;render();}
 function play(){if(S.timer){stop();return;}if(S.step>=N)S.step=0;S.timer=setInterval(()=>{if(S.step>=N){stop();return;}setStep(S.step+1,{notify:true});},900);render();}
 
 /* ---------- events ---------- */
-function selectCow(id,scroll){S.sel=id;S.form=newForm();S.missOpen=false;S.missForm=newForm();S.tab='today';S.role='farmer';render();
+function selectCow(id,scroll,sub){S.sel=id;S.sub=sub||S.sub||'why';S.form=newForm();S.missOpen=false;S.missForm=newForm();S.tab='today';S.role='farmer';render();
   if(scroll){const d=$('#detail');if(d)d.scrollIntoView({behavior:matchMedia('(prefers-reduced-motion: reduce)').matches?'auto':'smooth',block:'start'});}}
 document.addEventListener('click',e=>{const t=e.target;
   const sl=t.closest('[data-src]');if(sl){e.preventDefault();S.hl=sl.dataset.src;S.tab='sources';S.role='farmer';render();const el=document.getElementById('ref-'+S.hl);if(el&&!sl.classList.contains('reflink'))window.scrollTo(0,0);if(el&&sl.classList.contains('reflink'))el.scrollIntoView({block:'center'});return;}
   if(t.closest('#srcLink')){e.preventDefault();S.tab='sources';S.hl=null;render();window.scrollTo(0,0);return;}
-  const g=t.closest('[data-goto]');if(g){$('#toastHost').innerHTML='';selectCow(g.dataset.goto,true);return;}
+  const sb=t.closest('[data-sub]');if(sb){S.sub=sb.dataset.sub;render();return;}
+  const g=t.closest('[data-goto]');if(g){$('#toastHost').innerHTML='';selectCow(g.dataset.goto,true,g.dataset.gotoSub||'why');return;}
   if(t.closest('[data-dismiss]')){$('#toastHost').innerHTML='';return;}
   const cow=t.closest('[data-cow]');if(cow){selectCow(cow.dataset.cow,window.innerWidth<980);return;}
   const tab=t.closest('[data-tab]');if(tab){S.tab=tab.dataset.tab;render();return;}
